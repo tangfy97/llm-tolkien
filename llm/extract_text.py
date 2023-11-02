@@ -17,27 +17,15 @@ from llm import config
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 
-
-def extract(url: str, start_page: int, end_page: int, 
+def extract(file_path: str, start_page: int, end_page: int, 
             header_height: int, footer_height: int, 
             extraction_path: Path) -> None:
-    """Extract text from a PDF url.
-    Pages are exported in a jsonl file.
-
-    Args:
-        url (str): url of the pdf
-        start_page (int): first page to consider
-        end_page (int): last page to consider
-        header_height (int): header height in pixels
-        footer_height (int): footer height in pixels
-    """
-    LOGGER.info(f'Start extracting pages from {url}')
-    response = requests.get(url)
-    content = io.BytesIO(response.content)
-    with pdfplumber.open(content) as pdf:
-        pages = extract_text_from_pdf(pdf, start_page, end_page, header_height, footer_height)
-    LOGGER.info(f'Finished extracting texts from {url}')
+    LOGGER.info(f'Start extracting pages from {file_path}')
+    with pdfplumber.open(file_path) as pdf:
+        pages = list(extract_text_from_pdf(pdf, start_page, end_page, header_height, footer_height))
+    LOGGER.info(f'Finished extracting texts from {file_path}')
     to_jsonl(pages=pages, path=extraction_path)
+
 
 
 def to_jsonl(pages: Iterator[Tuple[int, str]], path: Path) -> None:
@@ -68,9 +56,19 @@ def extract_text_from_pdf(pdf: PDF, start_page: int, end_page: int,
 
 
 if __name__ == "__main__":
-    extract(url=config.url, 
-            start_page=config.start_page, 
-            end_page=config.end_page, 
-            header_height=config.header_height, 
-            footer_height=config.footer_height,
-            extraction_path=config.extraction_path)
+    # The following block of code should be placed inside the if __name__ == "__main__": block
+    books_dir = config.books_dir  # Replace with the actual path to your 'books' directory
+    for file_path in books_dir.glob('*.pdf'):
+        extract(file_path=str(file_path), 
+                start_page=config.start_page, 
+                end_page=config.end_page, 
+                header_height=config.header_height, 
+                footer_height=config.footer_height,
+                extraction_path=config.extraction_path)
+
+ #   extract(url=config.url, 
+ #           start_page=config.start_page, 
+ #           end_page=config.end_page, 
+ #           header_height=config.header_height, 
+ #           footer_height=config.footer_height,
+ #           extraction_path=config.extraction_path)
